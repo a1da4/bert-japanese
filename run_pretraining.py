@@ -179,12 +179,20 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     if mode == tf.estimator.ModeKeys.TRAIN:
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
+      # plot learning curve (issue #952)
+      train_hook_list = []
+      train_tensors_log = {'loss': total_loss,
+                           'global_step': tf.train.get_or_create_global_step()
+                           }
+      train_hook_list.append(tf.train.LoggingTensorHook(tensors=train_tensors_log, every_n_iter=1))
+
 
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
           mode=mode,
           loss=total_loss,
           train_op=train_op,
-          scaffold_fn=scaffold_fn)
+          scaffold_fn=scaffold_fn,
+          training_hooks=train_hook_list)
     elif mode == tf.estimator.ModeKeys.EVAL:
 
       def metric_fn(masked_lm_example_loss, masked_lm_log_probs, masked_lm_ids,
