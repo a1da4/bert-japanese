@@ -1,0 +1,13 @@
+CUDA_VISIBLE_DEVICES=2 python3 run_pretraining.py \
+	--input_file=/path/to/data/pretraining-data.tf-record \
+	--output_dir=/path/to/outputdir/ \
+	--bert_config_file=bert_tiny_32k_config.json \
+	--max_seq_length=256 \
+	--max_predictions_per_seq=20 \
+	--do_train=True \
+	--do_eval=True \
+	--train_batch_size=32 \
+	--num_train_steps=100 \
+	--num_warmup_steps=10 \
+	--save_checkpoint_steps=100 \
+	--learning_rate=2e-5

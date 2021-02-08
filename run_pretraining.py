@@ -149,6 +149,13 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
          bert_config, model.get_pooled_output(), next_sentence_labels)
 
     total_loss = masked_lm_loss + next_sentence_loss
+    # write for tensorboard
+    with tf.name_scope('loss'):
+      tf.summary.scalar('loss', total_loss)
+    with tf.name_scope('masked_lm_loss'):
+      tf.summary.scalar("masked_lm_loss", masked_lm_loss)
+    with tf.name_scope('next_sentence_loss'):
+      tf.summary.scalar("next_sentence_loss", next_sentence_loss)
 
     tvars = tf.trainable_variables()
 
@@ -179,12 +186,16 @@ def model_fn_builder(bert_config, init_checkpoint, learning_rate,
     if mode == tf.estimator.ModeKeys.TRAIN:
       train_op = optimization.create_optimizer(
           total_loss, learning_rate, num_train_steps, num_warmup_steps, use_tpu)
+      # write for tensorboard
+      #_ = tf.summary.scalar('loss', total_loss)
+      #_ = tf.summary.scalar("masked_lm_loss", masked_lm_loss)
+      #_ = tf.summary.scalar("next_sentence_loss", next_sentence_loss)
       # plot learning curve (issue #952)
       train_hook_list = []
       train_tensors_log = {'loss': total_loss,
                            'global_step': tf.train.get_or_create_global_step()
                            }
-      train_hook_list.append(tf.train.LoggingTensorHook(tensors=train_tensors_log, every_n_iter=1))
+      train_hook_list.append(tf.train.LoggingTensorHook(tensors=train_tensors_log, every_n_iter=10))
 
 
       output_spec = tf.contrib.tpu.TPUEstimatorSpec(
@@ -496,6 +507,9 @@ def main(_):
       for key in sorted(result.keys()):
         tf.logging.info("  %s = %s", key, str(result[key]))
         writer.write("%s = %s\n" % (key, str(result[key])))
+
+  # tensorboard
+  summary = tf.summary.merge_all()
 
 
 if __name__ == "__main__":
